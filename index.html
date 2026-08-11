@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume</title>
+    <title>Resume Selection</title>
     <style>
+        :root {
+            --bg-dark: #121212;
+            --page-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-accent: #818cf8; /* Subtle indigo */
+            --border-color: #333;
+            --blur-strength: 10px;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,63 +21,181 @@
         }
 
         body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
+            /* Optional: subtle grid pattern on the main body background */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        .container {
+        .main-container {
             width: 100%;
-            max-width: 380px;
-            padding: 24px;
+            max-width: 1000px; /* Adjust based on preference */
+            perspective: 1000px; /* Essential for 3D page effect */
+        }
+
+        h1.title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 40px;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
+        }
+
+        .book-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Space between the pages */
+            width: 100%;
+        }
+
+        /* The Page Link itself is the 'clickable panel' */
+        .page-link {
+            display: block;
+            flex: 1; /* Both panels take equal width */
+            max-width: 450px;
+            aspect-ratio: 8.5 / 11; /* Simulates US Letter/A4 paper ratio */
+            background-color: var(--page-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Hover effect: Subtle lift and shadow change */
+        .page-link:hover {
+            transform: translateY(-5px);
+            border-color: var(--text-accent);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Content inside the page panel */
+        .page-content {
+            z-index: 10; /* Keep text above everything */
+            padding: 20px;
             text-align: center;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #f0f6fc;
-            margin-bottom: 24px;
-            letter-spacing: -0.02em;
-        }
-
-        .links {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .btn {
-            display: block;
-            padding: 14px 20px;
-            background-color: #161b22;
-            color: #58a6ff;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.95rem;
+        .resume-name {
+            font-size: 1.4rem;
             font-weight: 500;
-            transition: all 0.15s ease;
+            color: var(--text-accent);
+            margin-bottom: 10px;
         }
 
-        .btn:hover {
-            background-color: #21262d;
-            border-color: #8b949e;
-            color: #79c0ff;
+        .view-prompt {
+            font-size: 0.9rem;
+            color: #999;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.3s ease;
+        }
+
+        /* Show the 'View PDF' text on hover */
+        .page-link:hover .view-prompt {
+            opacity: 1;
+        }
+
+        /*
+         * Option to simulate the blurred preview using a backdrop.
+         * Note: Browsers cannot read PDF content to blur it directly.
+         * We simulate the 'aesthetic' with a subtle overlay gradient.
+         */
+        .blurred-preview-simulator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.01), rgba(0,0,0,0.1));
+            backdrop-filter: blur(2px); /* Subtle blur of anything placed *behind* this, if we had it. Use sparingly. */
+            z-index: 1;
+            opacity: 0.5; /* Keeps it very subtle */
+        }
+
+        /* Adds a subtle spine/fold effect to the inner edges of the book */
+        .page-link::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            pointer-events: none;
+        }
+
+        /* Lefthand page gets shadow on the right edge */
+        .left-page::after {
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.2) 90%);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        /* Righthand page gets shadow on the left edge */
+        .right-page::after {
+            left: 0;
+            background: linear-gradient(-90deg, transparent, rgba(0,0,0,0.2) 90%);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        /* Response for smaller screens (stack the panels) */
+        @media (max-width: 768px) {
+            .book-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+            .page-link {
+                aspect-ratio: auto;
+                width: 100%;
+                max-width: 400px;
+                padding: 60px 20px;
+            }
+            .page-link::after {
+                display: none; /* Hide spine effect when stacked */
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Select Resume</h1>
-    <div class="links">
-        <a href="./resume.pdf" class="btn" target="_blank">Haveloc Resume</a>
-        <a href="./Overleaf-general.pdf" class="btn" target="_blank">Overleaf Resume</a>
+<div class="main-container">
+    <h1 class="title">Select Resume</h1>
+
+    <div class="book-container">
+        <!-- Left Page -->
+        <a href="./resume.pdf" target="_blank" class="page-link left-page">
+            <div class="blurred-preview-simulator"></div>
+            <div class="page-content">
+                <p class="resume-name">Haveloc Resume</p>
+                <p class="view-prompt">Click to View PDF</p>
+            </div>
+        </a>
+
+        <!-- Right Page -->
+        <a href="./Overleaf-general.pdf" target="_blank" class="page-link right-page">
+            <div class="blurred-preview-simulator"></div>
+            <div class="page-content">
+                <p class="resume-name">Overleaf Resume</p>
+                <p class="view-prompt">Click to View PDF</p>
+            </div>
+        </a>
     </div>
 </div>
 
